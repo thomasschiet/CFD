@@ -37,29 +37,31 @@ function numerical_solution(;
 
     β_0J = u
   else # Dirichlet
-    γ_0 = (u - 2ϵ/h)a
-    γ_1 = (u - 2ϵ/h)b
+    γ_0 = 2a*(1-2ϵ/h)
+    γ_1 = 2b*(1 - 2ϵ/h)
 
-    β_0J = 2ϵ/h
+    β_0J = (1-6ϵ/h)
+    β_01 = (1-2ϵ/h)
   end
 
-  q_tilde = [h*q[1] + γ_0; h*q[2:end-1]; h*q[end] + γ_1]
+  q_tilde = [h*q[1] + γ_0; 2*h*q[2:end-1]; h*q[end] + γ_1]
 
   β_11 = -2ϵ/h
 
   β_0 = zeros(J)
-  β_0[1:J-1] = u/2 + ϵ/h
+  β_0[1:J-1] = 1 - 2ϵ/h
   β_0[J] = β_0J
 
   β_1 = zeros(J)
   β_1[1] = β_11
   β_1[2:J] = u/2 - ϵ/h
 
-  α_minus1 = [0; -β_0[1:end-1]]
-  α_0 = β_0 - β_1
-  α_1 = [β_1[2:end]; 0]
+  α_minus1 = [0; fill(2ϵ/h -1, J-1)]
+  α_0 = fill(-4ϵ/h, J)
+  α_1 = [fill(2ϵ/h+1, J-1); 0]
 
   A = diagm(α_minus1[2:end], -1) + diagm(α_0, 0) + diagm(α_1[1:end-1], 1)
+  A[J,J] = 1-6ϵ/h
   b = q_tilde
 
   Pe_m = u*h/(ϵ)
