@@ -67,6 +67,9 @@ function numerical_solution(;
   Pe_m = u*h/(ϵ)
   println("Mesh Peclet = ", Pe_m)
   println("isPositiveType(A) = ", isPositiveType(A))
+  if Pe_m ≤ 2 && !isPositiveType(A)
+    println(A)
+  end
 
   return inv(A)*b
   return b\A
@@ -81,7 +84,7 @@ b = 1
 J = 10
 
 # diffusion
-ϵ = 1e-1
+ϵ = 0.51e-1
 
 φ = numerical_solution(J = J, q = 0, a = a, b = b, ϵ = ϵ, boundarytype = "Dirichlet")
 plot(x = 1:J, y = φ, Geom.line)
@@ -110,7 +113,8 @@ end
 function isPositiveType(A::AbstractMatrix)
   (J, c) = size(A)
   for j = 2:J-1
-    if sum(A[j, :]) ≠ 0
+    if abs(sum(A[j, :])) > 1e-10
+      println("hierr", sum(A[j, :]))
       return false
     end
 
