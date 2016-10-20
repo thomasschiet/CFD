@@ -14,7 +14,11 @@ function exact_solution(;
 
   @assert ((typeof(J) == Void) $ (typeof(h) == Void)) || h ≈ 1/J "J or h should be provided, but not both"
   @assert boundarytype == "Dirichlet" || boundarytype == "Neumann" "Boundary type should be either Dirichlet or Neumann"
-  a + (b-a)*(exp(-x/ϵ) - 1)/(exp(-1/ϵ) - 1)
+
+  pe = 1/ϵ
+  x = collect(linspace(0, 1, J))
+  return a + (b-a)*(exp((x-1)*pe) - exp(-pe))/(1 - exp(-pe))
+
 end
 
 function numerical_solution(;
@@ -52,7 +56,7 @@ function numerical_solution(;
 
     β_0J = u
   else # Dirichlet
-    γ_0 = 2a*(1-2ϵ/h)
+    γ_0 = -a*(1 + 2ϵ/h)
     γ_1 = 2b*(1 - 2ϵ/h)
 
     β_0J = (1-6ϵ/h)
@@ -83,9 +87,7 @@ function numerical_solution(;
   println("Mesh Peclet = ", Pe_m)
   println("isPositiveType(A) = ", isPositiveType(A))
 
-  return inv(A)*b
   return b\A
-  # return b\A
 end
 
 # boundary conditions
