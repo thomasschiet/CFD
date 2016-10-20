@@ -11,7 +11,8 @@ function numerical_solution(;
   scheme="central1",
   refinement = true,
   m1 = 20,
-  m2 = 50
+  m2 = 50,
+  q = 0
   )
 
   if refinement
@@ -42,7 +43,16 @@ function numerical_solution(;
     γ_1 = (1-(2/pe)/dx[n])*b
   end
 
-  f = zeros(length(y))
+  if typeof(q) == Function
+    f = map(x -> x[2] * q(x[1]), zip(y, dx))
+  elseif typeof(q) <: Vector
+    f = q
+  elseif typeof(q) <: Number
+    f = fill(float(q), length(y))
+  else
+    f = zeros(length(y))
+  end
+
   f[1] = f[1] + γ_0
   f[n] = f[n] - γ_1
 

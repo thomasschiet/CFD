@@ -11,11 +11,13 @@ refinement = true
 m1 = 20
 m2 = 50
 
-(ϕ_n, x) = numerical_solution(a=a, b=b, pe=pe, scheme=scheme, refinement=refinement, m1=m1, m2=m2)
+q(x) = 10cos(20π*x)
+
+(ϕ_n, x) = numerical_solution(a=a, b=b, pe=pe, scheme=scheme, refinement=refinement, m1=m1, m2=m2, q = q)
 df_n = DataFrame(x=x, y=ϕ_n, label="Numerical")
 
 ϕ_e = exact_solution(x, pe, a, b)
-df_e = DataFrame(x=x, y=ϕ_e, label="Exact")
+df_e = DataFrame(x = x, y = ϕ_e, label="Exact")
 
 df = vcat(df_n, df_e)
 
