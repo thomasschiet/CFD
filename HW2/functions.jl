@@ -43,7 +43,7 @@ function numerical_solution(;
     γ_1 = (1-(2/pe)/dx[n])*b
   end
 
-  if typeof(q) == Function
+  if typeof(q) <: Function
     f = map(x -> x[2] * q(x[1]), zip(y, dx))
   elseif typeof(q) <: Vector
     f = q
