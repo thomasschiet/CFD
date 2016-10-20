@@ -1,6 +1,6 @@
 using Gadfly
 
-exact_solution(x, pe, a, b) = a + (b-a)*(exp((x-1)*pe) - exp(-pe))/(1 - exp(-pe))
+exact_solution(x, pe, a, b) = a + (b-a)*(exp(-x*pe) - pe)/(exp(-pe) - pe)
 
 function numerical_solution(;
     J::Union{Int, Void} = nothing,
@@ -56,9 +56,9 @@ function numerical_solution(;
   β_1[1] = β_11
   β_1[2:J] = u/2 - ϵ/h
 
-  α_minus1 = [0; fill(2ϵ/h -1, J-1)]
+  α_minus1 = [0; fill(2ϵ/h +1, J-1)]
   α_0 = fill(-4ϵ/h, J)
-  α_1 = [fill(2ϵ/h+1, J-1); 0]
+  α_1 = [fill(2ϵ/h-1, J-1); 0]
 
   A = diagm(α_minus1[2:end], -1) + diagm(α_0, 0) + diagm(α_1[1:end-1], 1)
   A[J,J] = 1-6ϵ/h
@@ -67,9 +67,6 @@ function numerical_solution(;
   Pe_m = u*h/(ϵ)
   println("Mesh Peclet = ", Pe_m)
   println("isPositiveType(A) = ", isPositiveType(A))
-  if Pe_m ≤ 2 && !isPositiveType(A)
-    println(A)
-  end
 
   return inv(A)*b
   return b\A
@@ -81,13 +78,19 @@ a = 0
 b = 1
 
 # number of cells
-J = 10
+J = 100
 
 # diffusion
-ϵ = 0.51e-1
+ϵ = 1
+
+# x-coordinates
+x = (1:J)/J
 
 φ = numerical_solution(J = J, q = 0, a = a, b = b, ϵ = ϵ, boundarytype = "Dirichlet")
-plot(x = 1:J, y = φ, Geom.line)
+plot(
+  layer(x = x, y = φ, Geom.line, Theme(default_color=color("orange"))),
+  layer(x = x, y = exact_solution(x,1/ϵ,a,b), Geom.line, Theme(default_color=color("purple")))
+)
 
 function L2error(num_sol::Function, ex_sol::Function;
     J::Union{Int, Void} = nothing,
@@ -113,17 +116,14 @@ end
 function isPositiveType(A::AbstractMatrix)
   (J, c) = size(A)
   for j = 2:J-1
-    if abs(sum(A[j, :])) > 1e-10
-      println("hierr", sum(A[j, :]))
+    if sum(A[j, :]) ≠ 0
       return false
     end
 
-    if A[j, j - 1] ≥ 0 || A[j, j + 1] ≥ 0
+    if A[j, j - 1] ≤  0 || A[j, j + 1] ≤ 0
       return false
     end
   end
 
   return true
 end
-
-[1 2;3 4][1, :]
