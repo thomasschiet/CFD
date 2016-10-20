@@ -3,7 +3,7 @@ using DataFrames
 
 include("functions.jl")
 
-a=0.5
+a=0.3
 b=1
 pe=10
 scheme="central1"

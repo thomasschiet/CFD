@@ -36,7 +36,7 @@ function numerical_solution(;
     β_1 = 1/2 - β_diffusion[1:n]
     β_0[n] = β_diffusion[n+1]
     β_1[1] = - β_diffusion[1]
-    γ_0 = (1+(2/pe)/dx[1])*a
+    γ_0 = (1+(1/pe)/dx[1])*a
     γ_1 = (1-(2/pe)/dx[n])*b
   end
 
