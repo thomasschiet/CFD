@@ -1,6 +1,21 @@
 using Gadfly
+using DataFrames
 
-exact_solution(x, pe, a, b) = a + (b-a)*(exp(-x*pe) - pe)/(exp(-pe) - pe)
+function exact_solution(;
+  J::Union{Int, Void} = nothing,
+  h::Union{Number, Void} = nothing,
+  a::Number = 0,
+  b::Number = 1,
+  boundarytype::AbstractString = "Dirichlet",
+  q::Union{Vector, Number} = 0,
+  u::Number = 1,
+  ϵ::Number = 1e-4
+  )
+
+  @assert ((typeof(J) == Void) $ (typeof(h) == Void)) || h ≈ 1/J "J or h should be provided, but not both"
+  @assert boundarytype == "Dirichlet" || boundarytype == "Neumann" "Boundary type should be either Dirichlet or Neumann"
+  a + (b-a)*(exp(-x/ϵ) - 1)/(exp(-1/ϵ) - 1)
+end
 
 function numerical_solution(;
     J::Union{Int, Void} = nothing,
@@ -78,20 +93,27 @@ a = 0
 b = 1
 
 # number of cells
-J = 100
+J = 1000
 
 # diffusion
-ϵ = 1
+ϵ = 1e-1
 
 # x-coordinates
 x = (1:J)/J
 
-φ = numerical_solution(J = J, q = 0, a = a, b = b, ϵ = ϵ, boundarytype = "Dirichlet")
-plot(
-  layer(x = x, y = φ, Geom.line, Theme(default_color=color("orange"))),
-  layer(x = x, y = exact_solution(x,1/ϵ,a,b), Geom.line, Theme(default_color=color("purple")))
-)
+# Solving numerically and putting data in DataFrame for plotting
+φ_n = numerical_solution(J = J, q = 0, a = a, b = b, ϵ = ϵ, boundarytype = "Dirichlet")
+df_n = DataFrame(x=x, y=φ_n, label="Numerical")
 
+# Solving exact and putting data in DataFrame for plotting
+φ_e = exact_solution(J = J, q = 0, a = a, b = b, ϵ = ϵ, boundarytype = "Dirichlet")
+df_e = DataFrame(x=x, y=φ_e, label="Exact")
+
+# Plot the two dataframes
+df = vcat(df_n, df_e)
+
+p = plot(df, x="x", y="y", color="label", Geom.line,
+         Scale.discrete_color_manual("blue","red"))
 function L2error(num_sol::Function, ex_sol::Function;
     J::Union{Int, Void} = nothing,
     h::Union{Number, Void} = nothing,
