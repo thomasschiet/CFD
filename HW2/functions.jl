@@ -1,4 +1,4 @@
-exact_solution(x) = a + (b-a)*(exp(x/ϵ) - 1)/(exp(1/ϵ) - 1)
+exact_solution(x, pe, a, b) = a + (b-a)*(exp(x*pe) - 1)/(exp(pe) - 1)
 
 L2Error(J, ϕ_e, ϕ_n) = 1/sqrt(J) * sqrt(sum((ϕ_e-ϕ_n).^2))
 
@@ -26,10 +26,10 @@ function numerical_solution(;
 
   dx = diff(x)
   n = length(x) - 1
-  y = (x[1:n] + x[2:n+1])/2
-  dy = [dx[1]/2; diff(y); dx[n]/2];
+  x = (x[1:n] + x[2:n+1])/2
+  dx = [dx[1]/2; diff(x); dx[n]/2];
 
-  β_diffusion = 1./(pe*dy)
+  β_diffusion = 1./(pe*dx)
 
   if scheme == "central1"
     β_0 = 1/2 + β_diffusion[2:n+1]
@@ -40,11 +40,11 @@ function numerical_solution(;
     γ_1 = (1-(2/pe)/dx[n])*b
   end
 
-  f = zeros(length(y))
+  f = zeros(length(x))
   f[1] = f[1] + γ_0
   f[n] = f[n] - γ_1
 
   A = spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1))
   full(A)
-  return (inv(full(A))*f, y)
+  return (inv(full(A))*f, x)
 end
