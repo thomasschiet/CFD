@@ -1,5 +1,7 @@
 exact_solution(x, pe, a, b) = a + (b-a)*(exp(x*pe) - 1)/(exp(pe) - 1)
 
+manufactured_exact(x, a, b) = a * cospi(x/2) + b / (1-e) * (1 - exp(x))
+
 function L2Error(ϕ_e, ϕ_n)
   1/sqrt(length(ϕ_e)) * sqrt(sum((ϕ_e-ϕ_n).^2))
 end
