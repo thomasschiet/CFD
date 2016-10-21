@@ -124,7 +124,6 @@ function chimera_solution(;
   y_coarse_right_index = minimum(find(x -> x ≥ y_fine_virtual, y_coarse))
 
   f_1[1] = f_1[1] + γ_0
-  f_1[end] = f_1[end] - γ_1
 
   A_11 = full(spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1)))
   A_12 = zeros(J, K)
@@ -156,15 +155,14 @@ function chimera_solution(;
   y_fine_left_index  = maximum(find(x -> x < y_coarse_virtual, y_fine))
   y_fine_right_index = minimum(find(x -> x ≥ y_coarse_virtual, y_fine))
 
-  f_2[1] = f_2[1] + γ_0
   f_2[end] = f_2[end] - γ_1
 
   f = [f_1; f_2]
 
   A_22 = full(spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1)))
   A_21 = zeros(K, J)
-  A_21[1, y_fine_left_index] = β_1[end] * (y_fine_virtual - y_coarse[y_coarse_left_index])/H;
-  A_21[1, y_fine_right_index] = β_1[end] * (1 - (y_fine_virtual - y_coarse[y_coarse_left_index])/H);
+  A_21[1, y_fine_left_index] = -β_0[1] * (y_coarse_virtual - y_fine[y_fine_left_index])/h;
+  A_21[1, y_fine_right_index] = -β_0[1] * (1 - (y_coarse_virtual - y_fine[y_fine_left_index])/h);
   A = [A_11 A_12; A_21 A_22]
   return ([y_fine; y_coarse], inv(A) * f)
 end
