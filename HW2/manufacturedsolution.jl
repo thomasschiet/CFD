@@ -3,7 +3,7 @@ using DataFrames
 
 include("functions.jl")
 
-a=0.1
+a=0
 b=1
 pe = 40
 scheme="central1"
@@ -22,5 +22,20 @@ df_e = DataFrame(x = x, y = ϕ_e, label="Exact")
 
 df = vcat(df_n, df_e)
 
-p = plot(df, x="x", y="y", color="label", Geom.line,
+p = plot(df, x="x", y="y", color="label", Geom.line, Geom.point,
          Scale.discrete_color_manual("blue","red"))
+
+ # Determine the L2Error
+
+ J = round(Int, collect(logspace(3, 1, 100)))
+ L2 = zeros(length(J))
+ i = 1
+ for j in J
+   (ϕ_n, x) = numerical_solution(a=a, b=b, pe=pe, scheme=scheme, refinement=refinement, m1=j, m2=0, q = q)
+   ϕ_e = manufactured_exact(x, a, b)
+   L2[i] = L2Error(ϕ_n, ϕ_e)
+   i = i + 1
+ end
+
+
+ plot(x = 1./J, y = L2, Scale.y_log10, Scale.x_log10)
