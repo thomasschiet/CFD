@@ -92,11 +92,11 @@ function chimera_solution(;
   # create fine grid matrix
   dx_fine = diff(x_fine) # width of cells
   y_fine = (x_fine[1:J] + x_fine[2:J+1])/2 # cell centers
-  dy_fine = [dx_fine[1]/2; diff(y_fine); dx_fine[end]/2]
+  dy_fine = [dx_fine[1]/2; diff(y_fine); dx_fine[end]]
 
   dx_coarse = diff(x_coarse) # width of cells
   y_coarse = (x_coarse[1:K] + x_coarse[2:K+1])/2 # cell centers
-  dy_coarse = [dx_coarse[1]/2; diff(y_coarse); dx_coarse[end]/2]
+  dy_coarse = [dx_coarse[1]; diff(y_coarse); dx_coarse[end]/2]
 
   β_diffusion = 1./(pe*dy_fine)
   β_0 = 0 + β_diffusion[2:J+1]
@@ -127,8 +127,10 @@ function chimera_solution(;
 
   A_11 = full(spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1)))
   A_12 = zeros(J, K)
-  A_12[J, y_coarse_left_index] = β_1[end] * (y_fine_virtual - y_coarse[y_coarse_left_index])/H
-  A_12[J, y_coarse_right_index] = β_1[end] * (1 - (y_fine_virtual - y_coarse[y_coarse_left_index])/H)
+
+  α = (y_fine_virtual - y_coarse[y_coarse_left_index])/H
+  A_12[J, y_coarse_left_index] = β_1[end] * α
+  A_12[J, y_coarse_right_index] = β_1[end] * (1 - α)
 
   β_diffusion = 1./(pe*dy_coarse)
   β_0 = 0 + β_diffusion[2:K+1]
@@ -161,8 +163,11 @@ function chimera_solution(;
 
   A_22 = full(spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1)))
   A_21 = zeros(K, J)
-  A_21[1, y_fine_left_index] = -β_0[1] * (y_coarse_virtual - y_fine[y_fine_left_index])/h;
-  A_21[1, y_fine_right_index] = -β_0[1] * (1 - (y_coarse_virtual - y_fine[y_fine_left_index])/h);
+
+  α = (y_coarse_virtual - y_fine[y_fine_left_index])/h
+  A_21[1, y_fine_left_index] = -β_0[1] * α
+  A_21[1, y_fine_right_index] = -β_0[1] * (1 - α)
+  
   A = [A_11 A_12; A_21 A_22]
   return ([y_fine; y_coarse], inv(A) * f)
 end
