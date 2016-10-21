@@ -38,8 +38,10 @@ q(x) = -π/2 * a * sinpi(x/2) + π^2/(4 * pe) * a * cospi(x/2) + (1/pe - 1)*b/(1
  end
 
 
- plot(x = 1./J, y = L2,
+ p = plot(x = 1./J, y = L2,
   Scale.y_log10, Scale.x_log10,
   Geom.point, Geom.line,
   Guide.XLabel("h"), Guide.YLabel("L₂ error")
   )
+
+  draw(PNG("HW2/plots/manufactured_L2error.png", 6inch, 3inch), p)
