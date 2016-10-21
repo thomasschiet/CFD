@@ -60,3 +60,109 @@ function numerical_solution(;
   full(A)
   return (inv(full(A))*f, y)
 end
+
+
+function chimera_solution(;
+  a = 0,
+  b = 1.0,
+  h = 0.02,
+  J = 20,
+  H = 0.1,
+  K = 7
+  )
+
+  pe = 1
+
+  @assert J * h + K * H ≥ 1 "Cells don't overlap"
+
+  q(x) = sinpi(x)
+
+  # fine grid
+  x_fine = zeros(J + 1) # Contains coords of cell bounds
+  indices = collect(1:J+1) # indices of first m1 cells
+  x_fine[indices] = (indices - 1) * h # set the coords of first m1 cells
+
+  x_coarse = zeros(K + 1) # Contains coords of cell bounds
+  indices = 1:K+1 # indices of first m1 cells
+  x_coarse[indices] = (indices - 1)*H # set the coords of first m1 cells
+  x_coarse = reverse(1 - x_coarse)
+
+  # create fine grid matrix
+  dx_fine = diff(x_fine) # width of cells
+  y_fine = (x_fine[1:J] + x_fine[2:J+1])/2 # cell centers
+  dy_fine = [dx_fine[1]/2; diff(y_fine); dx_fine[end]/2]
+
+  dx_coarse = diff(x_coarse) # width of cells
+  y_coarse = (x_coarse[1:K] + x_coarse[2:K+1])/2 # cell centers
+  dy_coarse = [dx_coarse[1]/2; diff(y_coarse); dx_coarse[end]/2]
+
+  β_diffusion = 1./(pe*dy_fine)
+  β_0 = 0 + β_diffusion[2:J+1]
+  β_1 = 0 - β_diffusion[1:J]
+  β_0[J] = β_diffusion[J+1]
+  β_1[1] = - β_diffusion[1]
+  γ_0 = (0+(2/pe)/dx_fine[1])*a
+  γ_1 = 0
+
+  if typeof(q) <: Function
+    f_1 = map(x -> x[2] * q(x[1]), zip(y_fine, dx_fine))
+  elseif typeof(q) <: Vector
+    f_1 = q
+  elseif typeof(q) <: Number
+    f_1 = fill(float(q), J)
+  else
+    f_1 = zeros(J)
+  end
+
+  y_fine_virtual = y_fine[end] + h
+
+  sort!(y_fine)
+  sort!(y_coarse)
+  y_coarse_left_index  = maximum(find(x -> x < y_fine_virtual, y_coarse))
+  y_coarse_right_index = minimum(find(x -> x ≥ y_fine_virtual, y_coarse))
+
+  f_1[1] = f_1[1] + γ_0
+  f_1[end] = f_1[end] - γ_1
+
+  A_11 = full(spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1)))
+  A_12 = zeros(J, K)
+  A_12[J, y_coarse_left_index] = β_1[end] * (y_fine_virtual - y_coarse[y_coarse_left_index])/H
+  A_12[J, y_coarse_right_index] = β_1[end] * (1 - (y_fine_virtual - y_coarse[y_coarse_left_index])/H)
+
+  β_diffusion = 1./(pe*dy_coarse)
+  β_0 = 0 + β_diffusion[2:K+1]
+  β_1 = 0 - β_diffusion[1:K]
+  β_0[K] = β_diffusion[K+1]
+  β_1[1] = - β_diffusion[1]
+  γ_0 = 0
+  γ_1 = (0-(2/pe)/dx_coarse[K])*b
+
+  if typeof(q) <: Function
+    f_2 = map(x -> x[2] * q(x[1]), zip(y_coarse, dx_coarse))
+  elseif typeof(q) <: Vector
+    f_2 = q
+  elseif typeof(q) <: Number
+    f_2 = fill(float(q), K)
+  else
+    f_2 = zeros(K)
+  end
+
+  y_coarse_virtual = y_coarse[1] - H
+
+  sort!(y_fine)
+  sort!(y_coarse)
+  y_fine_left_index  = maximum(find(x -> x < y_coarse_virtual, y_fine))
+  y_fine_right_index = minimum(find(x -> x ≥ y_coarse_virtual, y_fine))
+
+  f_2[1] = f_2[1] + γ_0
+  f_2[end] = f_2[end] - γ_1
+
+  f = [f_1; f_2]
+
+  A_22 = full(spdiagm((-β_0[1:end-1], β_0-β_1, β_1[2:end]), (-1, 0, 1)))
+  A_21 = zeros(K, J)
+  A_21[1, y_fine_left_index] = β_1[end] * (y_fine_virtual - y_coarse[y_coarse_left_index])/H;
+  A_21[1, y_fine_right_index] = β_1[end] * (1 - (y_fine_virtual - y_coarse[y_coarse_left_index])/H);
+  A = [A_11 A_12; A_21 A_22]
+  return ([y_fine; y_coarse], inv(A) * f)
+end
