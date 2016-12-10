@@ -1,5 +1,9 @@
 using Gadfly
 
+α = 4π
+β = 2π
+exact_solution(t, x) = cos(β * (x-u*t)) + exp(-α^2 * ϵ * t) * cos(α * (x-u*t))
+
 # Merson's method
 ## Butcher array
 s = 5
@@ -16,7 +20,7 @@ h = 1 / n_x
 c[2] = 1/3; a[2, 1] = 1/3;
 c[3] = 1/3; a[3, 1] = 1/6; a[3, 2] = 1/6;
 c[4] = 1/2; a[4, 1] = 1/8; a[4, 2] =   0; a[4, 3] =  3/8;
-c[5] = 1;   a[5, 1] = 1/2; a[5, 2] =   0; a[5, 3] = -2/3; a[5, 4] =   2;
+c[5] = 1;   a[5, 1] = 1/2; a[5, 2] =   0; a[5, 3] = -3/2; a[5, 4] =   2;
             b[   1] = 1/6; b[   2] =   0; b[   3] =    0; b[   4] = 2/3; b[5] = 1/6;
 
 Pe = 200
@@ -51,9 +55,9 @@ A[1, 2] = A[2, 3] = A[end, 1] = (1 + κ)const_c/4 - const_d/2
 f(t, y) = -A*y + q(t, y)
 
 y = zeros(n_t, n_x)
-rand(3)
+
 # initial y
-y[1, :] = abs(rand(n_x))
+y[1, :] = map((x) -> exact_solution(0, x), linspace(0, 1, n_x))
 
 # iterate
 for n = 1:(n_t - 1)
@@ -81,4 +85,6 @@ for n = 1:(n_t - 1)
   y[n+1, :] = y[n, :] + τ * sum([ b[i] * k[i, :] for i in 1:s ])
 end
 
-plot(y = y[10, :], Geom.line)
+plot_n = 100
+plot(y = y[plot_n, :], Geom.line)
+plot((x) -> exact_solution(plot_n*τ, x), x = linspace(0, 1, 100))
