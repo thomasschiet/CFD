@@ -1,8 +1,8 @@
 using Gadfly
 
-α = 4π
-β = 2π
-exact_solution(t, x) = cos(β * (x-u*t)) + exp(-α^2 * ϵ * t) * cos(α * (x-u*t))
+α = 4
+β = 2
+exact_solution(t, x) = cospi(β * (x-u*t)) + exp(-α^2*π^2 * ϵ * t) * cospi(α * (x-u*t))
 
 # Merson's method
 ## Butcher array
@@ -14,8 +14,9 @@ b = zeros(s)
 n_t = 1000
 τ = 1 / (n_t)
 
-n_x = 100
+n_x = 500
 h = 1 / (n_x)
+x = linspace(0,1,n_x)
 
 c[2] = 1/3; a[2, 1] = 1/3;
 c[3] = 1/3; a[3, 1] = 1/6; a[3, 2] = 1/6;
@@ -26,7 +27,7 @@ c[5] = 1;   a[5, 1] = 1/2; a[5, 2] =   0; a[5, 3] = -3/2; a[5, 4] =   2;
 Pe = 400
 ϵ = 1/Pe
 u = 1
-κ = 1/3
+κ = 1/2
 const_c = abs(u)*τ/h
 const_d = 2ϵ*τ/h^2
 
@@ -46,6 +47,7 @@ for i in 3:n_x-1
     A[i, i] = A_id
     A[i, i + 1] = A_plus_1
 end
+
 # -2 term
 A[1, end - 1] = A[2, end] = A[end, end-2] = A_min_2
 # -1 term
@@ -58,7 +60,7 @@ A[1, 2] = A[2, 3] = A[end, 1] = A_plus_1
 A
 # Af = factorize(A)
 
-f(t, y) = -A*y/τ + q(t, y)
+f(t, y) = -A*y/τ
 
 y = zeros(n_t, n_x)
 
@@ -67,7 +69,7 @@ y[1, :] = map((x) -> exact_solution(0, x), linspace(0, 1, n_x))
 
 # iterate
 for n = 1:(n_t - 1)
-  t_n = n_t * τ
+  t_n = n * τ
 
   # determine k's
   k = zeros(s, n_x)
@@ -88,11 +90,11 @@ for n = 1:(n_t - 1)
   end
 
   # perform one step
-  y[n+1, :] = y[n, :] + τ * sum([ b[i] * k[i, :] for i in 1:s ])
+  y[n+1, :] = y[n, :] + τ * (sum([ b[i] * k[i, :] for i in 1:s ]) + q(t_n, x))
 end
 
 # gp
-plot_n = 600
+plot_n = n_t
   plot(
     layer(Geom.point, y = y[plot_n, :], x = linspace(0, 1, n_x)),
     layer(Geom.line, y = map((x) -> exact_solution((plot_n-1)*τ, x), linspace(0, 1, n_x)), x = linspace(0, 1, n_x)))
