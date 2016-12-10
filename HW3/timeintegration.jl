@@ -11,11 +11,11 @@ c = zeros(s)
 a = zeros(s, s)
 b = zeros(s)
 
-n_t = 100
-τ = 0.1
+n_t = 1000
+τ = 1 / (n_t)
 
 n_x = 100
-h = 1 / n_x
+h = 1 / (n_x)
 
 c[2] = 1/3; a[2, 1] = 1/3;
 c[3] = 1/3; a[3, 1] = 1/6; a[3, 2] = 1/6;
@@ -23,36 +23,42 @@ c[4] = 1/2; a[4, 1] = 1/8; a[4, 2] =   0; a[4, 3] =  3/8;
 c[5] = 1;   a[5, 1] = 1/2; a[5, 2] =   0; a[5, 3] = -3/2; a[5, 4] =   2;
             b[   1] = 1/6; b[   2] =   0; b[   3] =    0; b[   4] = 2/3; b[5] = 1/6;
 
-Pe = 200
+Pe = 400
 ϵ = 1/Pe
 u = 1
 κ = 1/3
 const_c = abs(u)*τ/h
 const_d = 2ϵ*τ/h^2
 
+q(0, 0)
 q(t, x::Number) = (2π)^2 * ϵ * cospi(2*(x - u*t))
 q(t, y::AbstractArray) = map((x) -> q(t, x), y)
 
 # cyclicly define A
+A_min_2 = const_c/4 * (1 - κ)
+A_min_1 = -const_c/4 * (5 - 3κ) - const_d/2
+A_id = const_d + (3 - 3κ)const_c/4
+A_plus_1 = (1 + κ)const_c/4 - const_d/2
 A = spzeros(n_x, n_x)
 for i in 3:n_x-1
-    A[i, i - 2] = const_c/4 * (1 - κ)
-    A[i, i - 1] = -const_c/4 * (5 - 3κ) - const_d/2
-    A[i, i] = const_d + (3 - 3κ)const_c/4
-    A[i, i + 1] = (1 + κ)const_c/4 - const_d/2
+    A[i, i - 2] = A_min_2
+    A[i, i - 1] = A_min_1
+    A[i, i] = A_id
+    A[i, i + 1] = A_plus_1
 end
 # -2 term
-A[1, end - 1] = A[2, end] = A[end, end-2] = const_c/4 * (1 - κ)
+A[1, end - 1] = A[2, end] = A[end, end-2] = A_min_2
 # -1 term
-A[1, end] = A[2, 1] = A[end, end-1] = -const_c/4 * (5 - 3κ) - const_d/2
+A[1, end] = A[2, 1] = A[end, end-1] = A_min_1
 # 0 term
-A[1, 1] = A[2, 2] = A[end, end] = const_d + (3 - 3κ)const_c/4
+A[1, 1] = A[2, 2] = A[end, end] = A_id
 # +1 term
-A[1, 2] = A[2, 3] = A[end, 1] = (1 + κ)const_c/4 - const_d/2
+A[1, 2] = A[2, 3] = A[end, 1] = A_plus_1
 
+A
 # Af = factorize(A)
 
-f(t, y) = -A*y + q(t, y)
+f(t, y) = -A*y/τ + q(t, y)
 
 y = zeros(n_t, n_x)
 
@@ -85,6 +91,8 @@ for n = 1:(n_t - 1)
   y[n+1, :] = y[n, :] + τ * sum([ b[i] * k[i, :] for i in 1:s ])
 end
 
-plot_n = 100
-plot(y = y[plot_n, :], Geom.line)
-plot((x) -> exact_solution(plot_n*τ, x), x = linspace(0, 1, 100))
+# gp
+plot_n = 600
+  plot(
+    layer(Geom.point, y = y[plot_n, :], x = linspace(0, 1, n_x)),
+    layer(Geom.line, y = map((x) -> exact_solution((plot_n-1)*τ, x), linspace(0, 1, n_x)), x = linspace(0, 1, n_x)))
