@@ -11,12 +11,12 @@ c = zeros(s)
 a = zeros(s, s)
 b = zeros(s)
 
-n_t = 1000
+n_t = 100
 τ = 1 / (n_t)
 
-n_x = 500
+n_x = 100
 h = 1 / (n_x)
-x = linspace(0,1,n_x)
+x = linspace(0, 1, n_x)
 
 c[2] = 1/3; a[2, 1] = 1/3;
 c[3] = 1/3; a[3, 1] = 1/6; a[3, 2] = 1/6;
@@ -57,10 +57,7 @@ A[1, 1] = A[2, 2] = A[end, end] = A_id
 # +1 term
 A[1, 2] = A[2, 3] = A[end, 1] = A_plus_1
 
-A
-# Af = factorize(A)
-
-f(t, y) = -A*y/τ
+f(t, y) = -A*y/τ + q(t, x)
 
 y = zeros(n_t, n_x)
 
@@ -90,7 +87,7 @@ for n = 1:(n_t - 1)
   end
 
   # perform one step
-  y[n+1, :] = y[n, :] + τ * (sum([ b[i] * k[i, :] for i in 1:s ]) + q(t_n, x))
+  y[n+1, :] = y[n, :] + τ * (sum([ b[i] * k[i, :] for i in 1:s ]))
 end
 
 # gp
