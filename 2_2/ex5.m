@@ -23,9 +23,9 @@ for i = 1:n_r
             eta_2 = (i - 1) / (n_r - 1);
             lambda = (2*Delta_eta_2/eta_2/Delta_eta_1 + (eta_2^2+(eta_2 + 1/(n_theta-1))^2)/Delta_eta_2)^-1;
             a = lambda * eta_2 * Delta_eta_2 / Delta_eta_1;
-            b = -b;
+            b = b;
             c = lambda * (eta_2^2 + (eta_2 + 1/(n_theta-1))^2);
-            d = -c;
+            d = lambda * (eta_2^2 + (eta_2 - 1/(n_theta-1))^2);
 
             A(row, row + 1) = a;
             A(row, row - 1) = b;
